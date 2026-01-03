@@ -1,0 +1,22 @@
+/* inisialiasi warna */
+:root {
+    --primary-color: #85301b;
+    --secondary-color: #512c17;
+    --background-color: #F1E5DE;
+    --text-color: #333333;
+}
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    outline: none;
+    border: none;
+    text-decoration: none;
+}
+
+body{
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
