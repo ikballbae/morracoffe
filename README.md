@@ -24,16 +24,6 @@
 
 ---
 
-## 📸 Tampilan (Screenshots)
-
-| Halaman Utama | Menu & Keranjang |
-|:---:|:---:|
-| <img src="assets/images/background.png" alt="Hero Section" width="400"> | *Ganti dengan screenshot menu/cart anda* |
-
-> *Ganti gambar di atas dengan screenshot asli website Anda agar lebih menarik!*
-
----
-
 ## ✨ Fitur Unggulan
 
 * **⚡ Reactive UI:** Menggunakan **Alpine.js** untuk interaksi keranjang belanja yang cepat tanpa reload halaman.
