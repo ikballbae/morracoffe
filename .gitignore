@@ -1,0 +1,8 @@
+# Abaikan file konfigurasi rahasia
+php/config.php
+
+# Abaikan folder module nodejs (jika pakai)
+node_modules/
+
+# Abaikan file sistem error log
+*.log

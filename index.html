@@ -1,178 +1,686 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Morra Coffee</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/style.css" />
+
     <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
+    <!-- midtrans -->
+    <script
+      type="text/javascript"
+      src="https://app.sandbox.midtrans.com/snap/snap.js"
+      data-client-key="SB-Mid-client-gjNUjnPRsTDPhamg"
+    ></script>
+
+    <script src="src/app.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#a84c1e",
+              "primary-soft": "#b96a52",
+              secondary: "#3a1f14",
+              bg: "#f5efe9",
+              navbar: "#24130c",
+            },
+            fontFamily: {
+              poppins: ["Poppins", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      .hide-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scroll {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
   </head>
-  <body>
-    <!-- Navbar Start -->
-    <nav class="navbar">
-      <img
-        src="assets/images/morrasecondary.png"
-        alt="morra logo"
-        class="logo"
-      />
-      <div class="navbar-nav">
-        <a href="#">Home</a>
-        <a href="#about">About</a>
-        <a href="#menu">Menu</a>
-        <a href="#contact">Contact</a>
+
+  <body
+    class="font-poppins bg-bg text-[#2e2e2e]"
+    x-data="products()"
+    :class="{ 'overflow-hidden': $store.cart.cartOpen }"
+  >
+    <div
+      x-show="$store.cart.cartOpen"
+      @click="$store.cart.cartOpen = false"
+      class="fixed inset-0 bg-black/50 z-[100] transition-opacity duration-300"
+    ></div>
+
+    <div
+      x-show="$store.cart.cartOpen"
+      class="fixed top-0 right-0 w-full md:w-96 h-screen bg-white z-[101] shadow-2xl flex flex-col"
+    >
+      <div
+        class="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10"
+      >
+        <h2 class="text-xl font-bold text-secondary">Keranjang</h2>
+        <button
+          @click="$store.cart.cartOpen = false"
+          class="text-gray-400 hover:text-gray-600"
+        >
+          <i data-feather="x" class="w-6 h-6"></i>
+        </button>
       </div>
 
-      <div class="navbar-extra">
-        <a href="#" id="search"><i data-feather="search"></i></a>
-        <a href="#" id="cart"><i data-feather="shopping-cart"></i></a>
-        <a href="#" id="hamburger-menu"><i data-feather="menu"></i></a>
+      <div class="flex-1 overflow-y-auto p-4 hide-scroll">
+        <template x-if="$store.cart.items.length === 0">
+          <div class="text-center py-12">
+            <i
+              data-feather="shopping-cart"
+              class="w-16 h-16 mx-auto text-gray-300 mb-4"
+            ></i>
+            <p class="text-gray-500 font-medium">Keranjang masih kosong</p>
+            <p class="text-gray-400 text-sm">Tambahkan produk untuk memulai</p>
+          </div>
+        </template>
+
+        <template x-for="(item, index) in $store.cart.items" :key="index">
+          <div class="flex gap-3 pb-4 mb-4 border-b border-gray-100">
+            <img
+              :src="`assets/images/menu/${item.img}`"
+              :alt="item.name"
+              class="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+            />
+            <div class="flex-1">
+              <h3
+                class="font-semibold text-secondary text-sm"
+                x-text="item.name"
+              ></h3>
+              <p class="text-xs text-gray-500 mt-1" x-text="item.tipe"></p>
+
+              <div class="flex justify-between items-center mt-2 mb-2">
+                <p
+                  class="text-primary font-bold text-sm"
+                  x-text="rupiah(item.price)"
+                ></p>
+
+                <div
+                  class="flex items-center bg-gray-100 border border-gray-200 rounded-md px-1"
+                >
+                  <button
+                    @click="item.quantity > 1 ? item.quantity-- : $store.cart.remove(index)"
+                    class="px-2 py-0.5 text-gray-600 hover:text-primary font-bold text-lg leading-none transition"
+                  >
+                    -
+                  </button>
+                  <span
+                    class="text-sm font-bold text-secondary min-w-[20px] text-center"
+                    x-text="item.quantity"
+                  ></span>
+                  <button
+                    @click="item.quantity++"
+                    class="px-2 py-0.5 text-gray-600 hover:text-primary font-bold text-lg leading-none transition"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <input
+                type="text"
+                x-model="item.note"
+                placeholder="Catatan (opsional)..."
+                class="w-full text-xs border border-gray-300 rounded p-1.5 focus:outline-none focus:border-primary placeholder-gray-400 bg-gray-50"
+              />
+            </div>
+            <button
+              @click="$store.cart.remove(index)"
+              class="text-red-500 hover:text-red-700 transition p-1"
+            >
+              <i data-feather="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </template>
+      </div>
+
+      <template x-if="$store.cart.items.length > 0">
+        <div class="bg-white border-t border-gray-200 p-4 shrink-0">
+          <div class="mb-4 space-y-3">
+            <h3 class="text-secondary font-bold text-sm">Detail Pelanggan</h3>
+
+            <div>
+              <input
+                type="text"
+                x-model="$store.cart.customer.name"
+                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                placeholder="Nama Lengkap"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <input
+                type="tel"
+                x-model="$store.cart.customer.phone"
+                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                placeholder="No. WhatsApp"
+              />
+              <input
+                type="email"
+                x-model="$store.cart.customer.email"
+                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                placeholder="Email"
+              />
+            </div>
+          </div>
+
+          <div class="border-t border-gray-200 my-4"></div>
+
+          <div class="space-y-3">
+            <div class="flex justify-between text-lg font-bold text-secondary">
+              <span>Total:</span>
+              <span
+                class="text-primary"
+                x-text="rupiah($store.cart.total)"
+              ></span>
+            </div>
+
+            <button
+              @click="$store.cart.checkout()"
+              :disabled="!$store.cart.customer.name || !$store.cart.customer.phone || !$store.cart.customer.email"
+              :class="(!$store.cart.customer.name || !$store.cart.customer.phone || !$store.cart.customer.email) 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-primary text-white hover:bg-primary-soft shadow-md'"
+              class="w-full py-3 font-bold rounded-lg transition"
+            >
+              <span
+                x-text="(!$store.cart.customer.name || !$store.cart.customer.phone || !$store.cart.customer.email) ? 'Lengkapi Data Dulu' : 'Checkout Sekarang'"
+              ></span>
+            </button>
+
+            <button
+              @click="$store.cart.cartOpen = false"
+              class="w-full py-3 border border-gray-300 text-secondary font-bold rounded-lg hover:bg-gray-50 transition"
+            >
+              Lanjut Belanja
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div
+      x-show="searchOpen"
+      @click="closeSearch()"
+      class="fixed inset-0 bg-black/50 z-[100] transition-opacity duration-300"
+    ></div>
+
+    <div
+      x-show="searchOpen"
+      class="fixed top-0 left-0 right-0 z-[101] pt-20 px-4 transition-all duration-300"
+    >
+      <div
+        @click.stop
+        class="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div class="p-4 border-b border-gray-200">
+          <div class="flex items-center gap-3">
+            <i data-feather="search" class="w-5 h-5 text-gray-400"></i>
+            <input
+              id="search-input"
+              x-model="searchQuery"
+              type="text"
+              placeholder="Cari menu, minuman, makanan..."
+              class="flex-1 bg-transparent outline-none text-secondary placeholder-gray-400 text-lg"
+              @keydown.escape="closeSearch()"
+            />
+            <button
+              @click="closeSearch()"
+              class="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <i data-feather="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="max-h-96 overflow-y-auto">
+          <template x-if="searchQuery.trim() && searchResults().length === 0">
+            <div class="p-8 text-center text-gray-500">
+              <p class="text-lg font-medium">
+                Tidak ada hasil untuk "<span x-text="searchQuery"></span>"
+              </p>
+              <p class="text-sm mt-2">Coba cari dengan kata kunci lain</p>
+            </div>
+          </template>
+
+          <template x-if="!searchQuery.trim()">
+            <div class="p-8 text-center text-gray-400">
+              <i
+                data-feather="search"
+                class="w-12 h-12 mx-auto mb-3 opacity-50"
+              ></i>
+              <p class="text-lg font-medium">Mulai ketik untuk mencari</p>
+            </div>
+          </template>
+
+          <template x-for="item in searchResults()" :key="item.id">
+            <button
+              @click="closeSearch()"
+              class="w-full p-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+            >
+              <img
+                :src="`assets/images/menu/${item.img}`"
+                :alt="item.name"
+                class="w-16 h-16 object-cover rounded-lg"
+              />
+              <div class="flex-1 text-left">
+                <h3
+                  class="font-semibold text-secondary"
+                  x-text="item.name"
+                ></h3>
+                <p
+                  class="text-xs text-gray-500 capitalize"
+                  x-text="item.tipe"
+                ></p>
+                <p
+                  class="text-primary font-bold text-sm mt-1"
+                  x-text="`Rp ${item.price.toLocaleString('id-ID')}`"
+                ></p>
+              </div>
+              <i data-feather="arrow-right" class="w-5 h-5 text-gray-400"></i>
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <nav
+      class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-7 py-4 bg-navbar/90 backdrop-blur-md border-b border-white/10"
+    >
+      <div class="flex items-center gap-2">
+        <img
+          src="assets/images/morrasecondary.png"
+          alt="Morra Coffee Logo"
+          class="h-10 w-auto"
+        />
+      </div>
+
+      <div class="hidden md:flex gap-8">
+        <a href="#home" class="text-bg hover:text-primary transition-colors"
+          >Home</a
+        >
+        <a href="#about" class="text-bg hover:text-primary transition-colors"
+          >About</a
+        >
+        <a href="#menu" class="text-bg hover:text-primary transition-colors"
+          >Menu</a
+        >
+        <a href="#contact" class="text-bg hover:text-primary transition-colors"
+          >Contact</a
+        >
+      </div>
+
+      <div class="flex gap-4">
+        <button
+          @click="openSearch()"
+          class="text-bg hover:text-primary transition-colors"
+        >
+          <i data-feather="search"></i>
+        </button>
+        <button
+          @click="$store.cart.cartOpen = true"
+          class="relative text-bg hover:text-primary transition-colors"
+        >
+          <i data-feather="shopping-cart"></i>
+          <span
+            x-show="$store.cart.items.length"
+            x-text="$store.cart.items.length"
+            :class="$store.cart.animateBadge ? 'scale-125 animate-bounce' : 'scale-100'"
+            class="absolute -top-2 -right-2 bg-primary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold transition-transform duration-300"
+          ></span>
+        </button>
+        <button
+          id="hamburger-menu"
+          class="text-bg hover:text-primary md:hidden transition-colors"
+        >
+          <i data-feather="menu"></i>
+        </button>
       </div>
     </nav>
-    <!-- Navbar End -->
 
-    <!-- Hero Section Start -->
-    <section class="hero" id="home">
-      <main class="content">
-        <h1>WARMTH LIVES HERE</h1>
-        <p>
+    <section
+      id="home"
+      class="min-h-screen bg-cover bg-center relative flex items-center justify-center"
+      style="
+        background-image: url(&quot;assets/images/background.png&quot;);
+        background-color: #24130c;
+      "
+    >
+      <div class="absolute inset-0 bg-black/50"></div>
+
+      <div class="relative text-center max-w-3xl px-6">
+        <h1
+          class="text-4xl md:text-6xl font-semibold text-bg mb-6 leading-tight"
+        >
+          WARMTH LIVES HERE
+        </h1>
+        <p class="text-gray-200 mb-8 text-lg font-light">
           A place for slow mornings, steady afternoons, and familiar evenings.
-          Simply put, it feels like coming home.
         </p>
-        <a href="#" class="cta">Shop Now</a>
-      </main>
+        <a
+          href="#menu"
+          class="px-8 py-3 bg-primary text-white rounded-full hover:bg-primary-soft transition shadow-lg hover:shadow-primary/50"
+        >
+          Shop Now
+        </a>
+      </div>
     </section>
-    <!-- Hero Section End -->
 
-    <!-- About Section Start -->
-    <section class="about" id="about">
-      <h2>ABOUT US</h2>
+    <section id="about" class="pt-32 pb-16 px-[7%]">
+      <h2 class="text-center text-4xl font-semibold text-secondary mb-12">
+        ABOUT US
+      </h2>
 
-      <div class="row">
-        <div class="about-img">
-          <img src="assets/images/background2.png" alt="about morra coffee" />
+      <div class="flex flex-col md:flex-row gap-10 items-center">
+        <div class="md:w-1/2 overflow-hidden rounded-2xl shadow-xl">
+          <img
+            src="assets/images/about-img.png"
+            class="w-full h-auto hover:scale-105 transition duration-500"
+            alt="About Morra Coffee"
+          />
         </div>
-        <div class="content">
-          <h3>Why chose our coffe?</h3>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eligendi,
-            deleniti nobis atque illum distinctio esse?
+
+        <div class="md:w-1/2">
+          <h3 class="text-3xl font-medium text-secondary mb-4">
+            Why choose our coffee?
+          </h3>
+          <p class="text-gray-700 mb-4 leading-relaxed">
+            Carefully selected beans, roasted with passion, served with warmth.
+            We believe that coffee is more than just a drink.
           </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam,
-            quidem.
+          <p class="text-gray-700 leading-relaxed">
+            Every cup tells a story of comfort and familiarity, brought to you
+            directly from the best farmers in the region.
           </p>
         </div>
       </div>
     </section>
-    <!--About Section End -->
 
-    <!-- Menu Section Start -->
-    <section id="menu" class="menu">
-      <h2>Our Menu</h2>
-      <p>
-        Lorem ipsum dolor sit amet consectetur, adipisicing elit. Sint pariatur
-        accusamus enim commodi itaque blanditiis.
-      </p>
+    <section
+      id="menu"
+      class="pt-28 pb-20 px-[5%] bg-[#fdfbf7]"
+      x-data="products()"
+    >
+      <div class="text-center mb-10 max-w-2xl mx-auto">
+        <span class="text-primary font-medium tracking-widest uppercase text-xs"
+          >Our Selection</span
+        >
+        <h2 class="text-3xl md:text-4xl font-bold text-secondary mt-1 mb-3">
+          Special Offers
+        </h2>
+        <p class="text-gray-500 text-sm md:text-base">
+          With our luxurious blends and cozy atmosphere, Morra Coffee is the
+          perfect place to enjoy your favorite drinks and meals.
+        </p>
+      </div>
 
-      <div class="row">
-        <div class="menu-card">
-          <img
-            src="./assets/images/menu/coffelatte.jpg"
-            alt="coffe latte"
-            class="menu-card-image"
-          />
-          <h3 class="menu-card-title">- Coffe Latte -</h3>
-          <p class="menu-card-price">IDR 26K</p>
+      <div class="flex justify-center gap-3 mb-10 flex-wrap">
+        <button
+          @click="filter = 'all'; showAll = false"
+          :class="filter === 'all' ? 'bg-secondary text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'"
+          class="px-5 py-1.5 rounded-full text-xs font-medium transition"
+        >
+          All Menu's
+        </button>
+        <button
+          @click="filter = 'minuman'; showAll = false"
+          :class="filter === 'minuman' ? 'bg-secondary text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'"
+          class="px-5 py-1.5 rounded-full text-xs font-medium transition"
+        >
+          Minuman
+        </button>
+        <button
+          @click="filter = 'makanan'; showAll = false"
+          :class="filter === 'makanan' ? 'bg-secondary text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'"
+          class="px-5 py-1.5 rounded-full text-xs font-medium transition"
+        >
+          Makanan
+        </button>
+        <button
+          @click="filter = 'dessert'; showAll = false"
+          :class="filter === 'dessert' ? 'bg-secondary text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'"
+          class="px-5 py-1.5 rounded-full text-xs font-medium transition"
+        >
+          Dessert
+        </button>
+      </div>
+
+      <div class="max-w-5xl mx-auto">
+        <div class="md:hidden flex flex-col gap-3 pb-8 pt-2">
+          <template x-for="(item, index) in displayedItems()" :key="item.id">
+            <div
+              class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 flex h-28"
+            >
+              <div class="w-28 h-28 flex-shrink-0 overflow-hidden">
+                <img
+                  :src="`assets/images/menu/${item.img}`"
+                  class="w-full h-full object-cover"
+                  :alt="item.name"
+                />
+              </div>
+              <div class="flex-1 p-3 flex flex-col justify-between">
+                <div class="min-w-0">
+                  <h3
+                    class="text-sm font-semibold text-secondary line-clamp-1"
+                    x-text="item.name"
+                  ></h3>
+                  <p
+                    class="text-xs text-gray-500 mt-0.5"
+                    x-text="item.tipe.charAt(0).toUpperCase() + item.tipe.slice(1)"
+                  ></p>
+                </div>
+                <p
+                  class="text-xs text-gray-600 line-clamp-1"
+                  x-text="item.description"
+                ></p>
+              </div>
+              <div
+                class="flex flex-col justify-between items-end p-3 flex-shrink-0"
+              >
+                <p
+                  class="text-sm font-bold text-primary"
+                  x-text="rupiah(item.price)"
+                ></p>
+                <button
+                  @click.prevent="$store.cart.add(item)"
+                  :disabled="isInCart(item.id)"
+                  :class="isInCart(item.id) ? 'bg-primary text-white opacity-80 cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-soft'"
+                  class="px-3 py-1.5 text-xs rounded-md font-medium transition-all duration-300"
+                >
+                  <span x-text="isInCart(item.id) ? 'Added' : 'Add'"></span>
+                </button>
+              </div>
+            </div>
+          </template>
         </div>
-        <div class="menu-card">
-          <img
-            src="./assets/images/menu/brownies.jpg"
-            alt="brownies"
-            class="menu-card-image"
-          />
-          <h3 class="menu-card-title">- Brownies -</h3>
-          <p class="menu-card-price">IDR 26K</p>
-        </div>
-        <div class="menu-card">
-          <img
-            src="./assets/images/menu/espresso.jpg"
-            alt="espresso"
-            class="menu-card-image"
-          />
-          <h3 class="menu-card-title">- Espresso -</h3>
-          <p class="menu-card-price">IDR 26K</p>
-        </div>
-        <div class="menu-card">
-          <img
-            src="./assets/images/menu/croissant.jpg"
-            alt="croissant"
-            class="menu-card-image"
-          />
-          <h3 class="menu-card-title">- Croissant -</h3>
-          <p class="menu-card-price">IDR 26K</p>
-        </div>
-        <div class="menu-card">
-          <img
-            src="./assets/images/menu/icecream.jpg"
-            alt="ice cream"
-            class="menu-card-image"
-          />
-          <h3 class="menu-card-title">- Ice Cream -</h3>
-          <p class="menu-card-price">IDR 26K</p>
+
+        <div class="hidden md:grid md:grid-cols-3 gap-6 pb-8 pt-2">
+          <template x-for="(item, index) in displayedItems()" :key="item.id">
+            <div
+              class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 relative flex flex-col"
+            >
+              <div class="w-full aspect-square overflow-hidden relative">
+                <img
+                  :src="`assets/images/menu/${item.img}`"
+                  class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                  :alt="item.name"
+                />
+              </div>
+              <div class="p-5 flex-1 flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-2 gap-2">
+                  <div class="flex-1">
+                    <h3
+                      class="text-lg font-bold text-secondary group-hover:text-primary transition-colors"
+                      x-text="item.name"
+                    ></h3>
+                    <p
+                      class="text-[10px] text-gray-400 uppercase tracking-wide"
+                      x-text="item.tipe"
+                    ></p>
+                  </div>
+                  <p
+                    class="text-lg font-bold text-primary flex-shrink-0"
+                    x-text="rupiah(item.price)"
+                  ></p>
+                </div>
+                <p
+                  class="text-gray-500 text-xs mb-4 line-clamp-2"
+                  x-text="item.description"
+                ></p>
+                <button
+                  @click.prevent="$store.cart.add(item)"
+                  :disabled="isInCart(item.id)"
+                  :class="isInCart(item.id) ? 'bg-primary text-white opacity-80 cursor-not-allowed' : 'border border-secondary text-secondary hover:bg-primary hover:text-white hover:border-primary'"
+                  class="w-full py-2 text-sm rounded-lg transition-all duration-300 font-medium flex justify-center items-center gap-2"
+                >
+                  <span
+                    x-text="isInCart(item.id) ? 'Added to Cart' : 'Add to Cart'"
+                  ></span>
+                </button>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
+
+      <div class="text-center mt-8">
+        <button
+          x-show="!showAll && searchResults().length > 6"
+          @click="showAll = true"
+          class="inline-flex items-center gap-2 text-sm text-primary font-semibold hover:gap-3 transition-all cursor-pointer"
+        >
+          View Full Menu <i data-feather="arrow-down" class="w-4 h-4"></i>
+        </button>
+
+        <button
+          x-show="showAll && searchResults().length > 6"
+          @click="showAll = false; $el.scrollIntoView({behavior: 'smooth', block: 'center'})"
+          class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary font-semibold hover:gap-3 transition-all cursor-pointer"
+        >
+          Show Less <i data-feather="arrow-up" class="w-4 h-4"></i>
+        </button>
+      </div>
     </section>
-    <!-- Menu Section End -->
 
-    <!-- Contact Section Start -->
-    <section id="contact" class="contact">
-      <h2>Contact Us</h2>
-      <p>
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere,
-        consequunturnnn.
-      </p>
+    <section id="contact" class="pt-32 pb-16 px-[7%]">
+      <h2 class="text-center text-4xl font-semibold text-secondary mb-12">
+        Contact Us
+      </h2>
 
-      <div class="row">
+      <div
+        class="flex flex-col md:flex-row rounded-3xl overflow-hidden shadow-2xl bg-navbar"
+      >
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126748.56400418743!2d107.5607556569328!3d-6.903442379439667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e6398252477f%3A0x146a1f93d3e815b2!2sBandung%2C%20Kota%20Bandung%2C%20Jawa%20Barat!5e0!3m2!1sid!2sid!4v1767534314989!5m2!1sid!2sid"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.452766467362!2d106.824964!3d-6.2023936!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f3c1b1b1b1b1%3A0x1b1b1b1b1b1b1b1b!2sJakarta!5e0!3m2!1sen!2sid!4v1600000000000!5m2!1sen!2sid"
+          class="w-full md:w-1/2 h-80 md:h-auto grayscale hover:grayscale-0 transition duration-300"
           allowfullscreen=""
           loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          class="map"
-        ></iframe>
+        >
+        </iframe>
 
-        <form class="contact-form">
-          <div class="field">
-            <label>Your Name</label>
-            <input type="text" placeholder="John Doe" required />
+        <form
+          class="p-10 flex-1 bg-gradient-to-b from-[#3b2314] to-[#2a170d] text-white"
+        >
+          <h3 class="text-xl mb-6 font-semibold">Send us a message</h3>
+          <div class="space-y-4">
+            <input
+              type="text"
+              placeholder="Your Name"
+              class="w-full p-3 rounded-lg bg-white/10 border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary text-white"
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              class="w-full p-3 rounded-lg bg-white/10 border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary text-white"
+            />
+            <textarea
+              placeholder="Message"
+              rows="4"
+              class="w-full p-3 rounded-lg bg-white/10 border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-primary text-white"
+            ></textarea>
           </div>
-
-          <div class="field">
-            <label>Email Address</label>
-            <input type="email" placeholder="you@email.com" required />
-          </div>
-
-          <div class="field">
-            <label>Phone</label>
-            <input type="tel" placeholder="+62 812 xxxx xxxx" required />
-          </div>
-
-          <button type="submit" class="btn">Send Message</button>
+          <button
+            class="w-full py-3 mt-6 bg-primary text-white font-bold rounded-full hover:bg-primary-soft transition shadow-lg"
+          >
+            Send Message
+          </button>
         </form>
       </div>
     </section>
-    <!-- Contact Section End -->
+
+    <footer
+      class="bg-navbar text-bg text-center py-8 mt-20 border-t border-white/10"
+    >
+      <div class="flex justify-center gap-4 mb-4">
+        <a href="#" class="hover:text-primary transition"
+          ><i data-feather="instagram"></i
+        ></a>
+        <a href="#" class="hover:text-primary transition"
+          ><i data-feather="twitter"></i
+        ></a>
+        <a href="#" class="hover:text-primary transition"
+          ><i data-feather="facebook"></i
+        ></a>
+      </div>
+      <p class="text-sm font-light">
+        © 2025 Morra Coffee. All rights reserved.
+      </p>
+    </footer>
 
     <script>
       feather.replace();
-    </script>
 
-    <script src="js/script.js"></script>
+      const hamburger = document.getElementById("hamburger-menu");
+      const mobileMenu = document.createElement("div");
+
+      mobileMenu.className =
+        "fixed top-0 right-[-100%] w-[80%] h-screen bg-navbar/95 backdrop-blur-xl p-8 flex flex-col gap-8 transition-all duration-500 md:hidden z-50 shadow-2xl justify-center items-center text-center";
+
+      mobileMenu.innerHTML = `
+    <button id="close-menu" class="absolute top-6 right-6 text-white hover:text-primary"><i data-feather="x"></i></button>
+    <a href="#home" class="text-white text-2xl font-medium hover:text-primary transition">Home</a>
+    <a href="#about" class="text-white text-2xl font-medium hover:text-primary transition">About</a>
+    <a href="#menu" class="text-white text-2xl font-medium hover:text-primary transition">Menu</a>
+    <a href="#contact" class="text-white text-2xl font-medium hover:text-primary transition">Contact</a>
+  `;
+
+      document.body.appendChild(mobileMenu);
+
+      const toggleMenu = () => {
+        mobileMenu.classList.toggle("right-0");
+        mobileMenu.classList.toggle("right-[-100%]");
+      };
+
+      hamburger.onclick = toggleMenu;
+      mobileMenu.querySelector("#close-menu").onclick = toggleMenu;
+      mobileMenu.querySelectorAll("a").forEach((link) => {
+        link.onclick = toggleMenu;
+      });
+
+      setTimeout(() => feather.replace(), 100);
+    </script>
   </body>
 </html>
